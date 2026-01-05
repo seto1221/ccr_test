@@ -1,0 +1,55 @@
+[config]
+skip_core_tasks = true
+
+[tasks.mod_install]
+description = "依存モジュールインストール"
+script = [
+	"npm add -g @anthropic-ai/claude-code @musistudio/claude-code-router"
+]
+
+[tasks.ccr_mkdir]
+description = "Claude Code Router 設定フォルダ作成"
+condition = { files_not_exist = [ "${HOME}/.claude-code-router" ] }
+script = [
+	"mkdir ${HOME}/.claude-code-router",
+]
+
+[tasks.ccr_setup]
+description = "Claude Code Router 設定ファイル配置"
+condition = { files_not_exist = [ "${HOME}/.claude-code-router/config.json" ] }
+dependencies = [ "ccr_mkdir" ]
+script = [
+	"cp -af ./config.json ${HOME}/.claude-code-router/"
+]
+
+[tasks.ccr_start]
+description = "Claude Code Router 開始"
+env = { "GEMINI_API_KEY" = { script = [ "cat api_key" ] } }
+dependencies = [ "ccr_setup" ]
+script = [
+	"ccr restart"
+]
+
+[tasks.ccr_stop]
+description = "Claude Code Router 停止"
+script = [
+	"ccr stop"
+]
+
+[tasks.code]
+description = "Claude Code 実行"
+env = { "GEMINI_API_KEY" = { script = [ "cat api_key" ] } }
+dependencies = [ "ccr_setup" ]
+script = [
+	"ccr code"
+]
+
+[tasks.api_setup]
+description = "API キーファイル配置"
+condition = { files_not_exist = [ "api_key" ] }
+script = [
+	"read -sp \"KEY: \" KEY",
+	"echo ${KEY} > api_key",
+	"chmod 600 api_key",
+	"echo",
+]
